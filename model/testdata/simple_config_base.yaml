@@ -1,0 +1,4 @@
+comment: Thanks for this!
+labels:
+  'bug':
+    - '\bbug[s]?\b'

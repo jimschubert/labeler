@@ -1,0 +1,8 @@
+labels:
+  'bug':
+    include:
+      - '\bbug[s]?\b'
+    exclude: []
+  'question':
+    include:
+      - '\bquestion\b'

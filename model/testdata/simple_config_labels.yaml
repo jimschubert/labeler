@@ -1,0 +1,9 @@
+comment: Labels
+labels:
+  'bug':
+    - '\bbug[s]?\b'
+  'duplicate':
+    - '\bduplicate\b'
+    - '\bdupe\b'
+  'question':
+    - '\bquestion\b'

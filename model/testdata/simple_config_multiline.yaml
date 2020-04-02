@@ -1,0 +1,6 @@
+comment: |
+  First line
+  Second line
+labels:
+  'bug':
+    - '\bbug[s]?\b'
