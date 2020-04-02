@@ -205,7 +205,7 @@ func (l *Labeler) addComment(comment *string) error {
 }
 
 func newComment(comment string) *string {
-	fullComment := fmt.Sprintf("<!-- Labaler (https://github.com/jimschubert/labeler) -->\n%s", comment)
+	fullComment := fmt.Sprintf("<!-- Labeler (https://github.com/jimschubert/labeler) -->\n%s", comment)
 	return &fullComment
 }
 

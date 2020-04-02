@@ -1,6 +1,6 @@
-# auto-labeler "full" schema
+# labeler "full" schema
 
-# enable auto-labeler on issues, prs, or both.
+# enable labeler on issues, prs, or both.
 enable:
   issues: true
   prs: true

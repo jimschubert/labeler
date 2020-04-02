@@ -1,4 +1,4 @@
-# auto-labeler "simple" schema
+# labeler "simple" schema
 # Comment is applied to both issues and pull requests.
 # If you need a more robust solution, consider the "full" schema.
 comment: |
