@@ -72,7 +72,7 @@ func (l *Labeler) Execute() error {
 func (l *Labeler) retrieveConfig() (*model.Config, error) {
 	ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
 	defer timeout()
-	r, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, ".github/labeler.yml", &github.RepositoryContentGetOptions{Ref: "master"})
+	r, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, ".github/labeler.yml", &github.RepositoryContentGetOptions{})
 	if err != nil {
 		return nil, err
 	}
