@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	issue       = "issues"
-	pullRequest = "pull_request"
+	issue             = "issues"
+	pullRequest       = "pull_request"
+	pullRequestTarget = "pull_request_target"
 )
 
 type githubEvent interface {
@@ -59,7 +60,7 @@ func (l *Labeler) Execute() error {
 		if err != nil {
 			return err
 		}
-	case pullRequest:
+	case pullRequestTarget, pullRequest:
 		err = l.processPullRequest()
 		if err != nil {
 			return err
@@ -103,8 +104,8 @@ func (l *Labeler) checkPreconditions() error {
 	if len(*l.Repo) <= 1 {
 		return errors.New("repo is invalid")
 	}
-	if *l.Event != issue && *l.Event != pullRequest {
-		return fmt.Errorf("event must be one of [ %s , %s ]", issue, pullRequest)
+	if *l.Event != issue && *l.Event != pullRequest && *l.Event != pullRequestTarget {
+		return fmt.Errorf("event must be one of [ %s , %s , %s ]", issue, pullRequest, pullRequestTarget)
 	}
 
 	return nil
