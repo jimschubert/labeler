@@ -1,4 +1,6 @@
 # labeler
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjimschubert%2Flabeler.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjimschubert%2Flabeler?ref=badge_shield)
+
 
 A labeler for GitHub issues and pull requests.
 
@@ -139,3 +141,6 @@ dist
 The labeler project is licensed under Apache 2.0
 
 *labeler* is a rewrite of an earlier GitHub App I wrote (see [auto-labeler](https://github.com/jimschubert/auto-labeler)). I've rewritten that app to replace the license while making the tool reusable across CI tools and operating systems.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjimschubert%2Flabeler.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjimschubert%2Flabeler?ref=badge_large)
