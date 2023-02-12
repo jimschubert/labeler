@@ -124,10 +124,6 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 		return nil, errors.New("a github repo is required")
 	}
 
-	if options.data == "" {
-		return nil, errors.New("a JSON string of event data is required")
-	}
-
 	if options.id < 0 {
 		return nil, errors.New("the integer id of the issue or pull request is required")
 	}
@@ -164,7 +160,9 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 	l.Repo = &options.repo
 	l.Event = &options.event
 	l.ID = &options.id
-	l.Data = &options.data
+	if options.data != "" {
+		l.Data = &options.data
+	}
 	l.configPath = options.configPath
 
 	return &l, nil

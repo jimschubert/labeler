@@ -115,17 +115,9 @@ func TestNewWithOptions(t *testing.T) {
 		},
 
 		{
-			name: "fails if owner,repo defined but data is not",
+			name: "fails if owner,repo defined but id is not",
 			args: args{
 				opts: []OptFn{WithOwner("jimschubert"), WithRepo("example")},
-			},
-			errorMatch: "a JSON string of event data is required",
-		},
-
-		{
-			name: "fails if owner,repo,data defined but id is not",
-			args: args{
-				opts: []OptFn{WithOwner("jimschubert"), WithRepo("example"), WithData("{}")},
 			},
 			errorMatch: "the integer id of the issue or pull request is required",
 		},
@@ -133,12 +125,11 @@ func TestNewWithOptions(t *testing.T) {
 		{
 			name: "constructs as expected when provided all required fields",
 			args: args{
-				opts: []OptFn{WithOwner("jimschubert"), WithRepo("example"), WithData("{}"), WithID(1000)},
+				opts: []OptFn{WithOwner("jimschubert"), WithRepo("example"), WithID(1000)},
 			},
 			validate: func(l *Labeler) {
 				assert.Equal(t, ptr("jimschubert"), l.Owner)
 				assert.Equal(t, ptr("example"), l.Repo)
-				assert.Equal(t, ptr("{}"), l.Data)
 				assert.Equal(t, ptr(1000), l.ID)
 
 				assert.NotNil(t, l.context, "Should have created a default context")
@@ -151,10 +142,10 @@ func TestNewWithOptions(t *testing.T) {
 			args: args{
 				opts: []OptFn{
 					// required fields
-					WithOwner("jimschubert"), WithRepo("example"), WithData("{}"), WithID(1000),
+					WithOwner("jimschubert"), WithRepo("example"), WithID(1000),
 
 					// optional fields
-					WithContext(childContext), WithConfigPath(".github/labeler-custom.yml"), WithToken("irrelevant"),
+					WithContext(childContext), WithConfigPath(".github/labeler-custom.yml"), WithData("{}"), WithToken("irrelevant"),
 				},
 			},
 			validate: func(l *Labeler) {
