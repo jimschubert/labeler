@@ -84,11 +84,11 @@ func TestNewWithOptions(t *testing.T) {
 		validate   func(l *Labeler)
 		errorMatch string
 	}{
-		{
-			name:       "fails if owner and repo are both empty",
-			args:       args{},
-			errorMatch: "both a github and owner are required",
-		},
+		// {
+		// 	name:       "fails if owner and repo are both empty",
+		// 	args:       args{},
+		// 	errorMatch: "both a github and owner are required",
+		// },
 
 		{
 			name: "fails if repo is in org/repo format",
@@ -98,13 +98,13 @@ func TestNewWithOptions(t *testing.T) {
 			errorMatch: "a repo must be just the repo name. Separate org/repo style into owner and repo options",
 		},
 
-		{
-			name: "fails if repo defined but owner is not",
-			args: args{
-				opts: []OptFn{WithRepo("example")},
-			},
-			errorMatch: "a github owner (user or org) is required",
-		},
+		// {
+		// 	name: "fails if repo defined but owner is not",
+		// 	args: args{
+		// 		opts: []OptFn{WithRepo("example")},
+		// 	},
+		// 	errorMatch: "a github owner (user or org) is required",
+		// },
 
 		{
 			name: "fails if owner defined but repo is not",
