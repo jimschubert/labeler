@@ -6,14 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/google/go-github/v50/github"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
-
 	"github.com/jimschubert/labeler/model"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -29,14 +26,15 @@ type githubEvent interface {
 
 // Labeler is the container for the application entrypoint's logic
 type Labeler struct {
-	Owner   *string
-	Repo    *string
-	Event   *string
-	Data    *string
-	ID      *int
-	context *context.Context
-	client  *github.Client
-	config  *model.Config
+	Owner      *string
+	Repo       *string
+	Event      *string
+	Data       *string
+	ID         *int
+	context    *context.Context
+	client     *github.Client
+	config     *model.Config
+	configPath string
 }
 
 // Execute performs the labeler logic
@@ -71,17 +69,23 @@ func (l *Labeler) Execute() error {
 }
 
 func (l *Labeler) retrieveConfig() (*model.Config, error) {
-	ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
-	defer timeout()
-	r, _, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, ".github/labeler.yml", &github.RepositoryContentGetOptions{})
+	if l.configPath == "" {
+		return nil, errors.New("the labeler configuration path can not be empty")
+	}
+	ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+	defer cancel()
+	r, _, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, l.configPath, &github.RepositoryContentGetOptions{})
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = r.Close()
+	}()
+
 	bytes, err := io.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("error reading .github/labeler.yml: %v", err)
+		return nil, fmt.Errorf("error reading %q: %w", l.configPath, err)
 	}
-	_ = r.Close()
 
 	var c model.Config
 	c = &model.FullConfig{}
@@ -90,10 +94,10 @@ func (l *Labeler) retrieveConfig() (*model.Config, error) {
 		c = &model.SimpleConfig{}
 		err = c.FromBytes(bytes)
 		if err != nil {
-			return nil, errors.New("could not parse .github/labeler.yml")
+			return nil, fmt.Errorf("could not parse %q", l.configPath)
 		}
 	}
-	log.WithFields(log.Fields{"labeler.yml": c}).Debug("Parsed labeler.yml")
+	log.WithFields(log.Fields{l.configPath: c}).Debugf("Parsed %q", l.configPath)
 	return &c, nil
 }
 
@@ -122,16 +126,14 @@ func (l *Labeler) processIssue() error {
 	count := l.applyLabels(issue, existingLabels)
 	if count > 0 {
 		var comment *string
-		switch (*l.config).(type) {
+		switch v := (*l.config).(type) {
 		case *model.FullConfig:
-			config := (*l.config).(*model.FullConfig)
-			if config != nil && config.Comments != nil {
-				comment = config.Comments.Issues
+			if v != nil && v.Comments != nil {
+				comment = v.Comments.Issues
 			}
 		case *model.SimpleConfig:
-			config := (*l.config).(*model.SimpleConfig)
-			if config != nil {
-				comment = &config.Comment
+			if v != nil {
+				comment = &v.Comment
 			}
 		}
 
@@ -158,16 +160,14 @@ func (l *Labeler) processPullRequest() error {
 	count := l.applyLabels(pr, existingLabels)
 	if count > 0 {
 		var comment *string
-		switch (*l.config).(type) {
+		switch v := (*l.config).(type) {
 		case *model.FullConfig:
-			config := (*l.config).(*model.FullConfig)
-			if config != nil && config.Comments != nil {
-				comment = config.Comments.PullRequests
+			if v != nil && v.Comments != nil {
+				comment = v.Comments.PullRequests
 			}
 		case *model.SimpleConfig:
-			config := (*l.config).(*model.SimpleConfig)
-			if config != nil {
-				comment = &config.Comment
+			if v != nil {
+				comment = &v.Comment
 			}
 		}
 
@@ -193,8 +193,8 @@ func labelExists(s []*github.Label, name *string) bool {
 
 func (l *Labeler) addComment(comment *string) error {
 	if comment != nil && len(*comment) > 0 {
-		ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
-		defer timeout()
+		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+		defer cancel()
 
 		issueComment := &github.IssueComment{
 			Body: newComment(*comment),
@@ -223,8 +223,8 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 	}
 
 	if hasNew {
-		ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
-		defer timeout()
+		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+		defer cancel()
 
 		added, _, err := l.client.Issues.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, labels)
 		if err != nil {
@@ -258,8 +258,8 @@ func (l *Labeler) getPullRequest() (*github.PullRequest, error) {
 			pr = pre.GetPullRequest()
 		}
 	} else {
-		ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
-		defer timeout()
+		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+		defer cancel()
 		pull, _, err := l.client.PullRequests.Get(ctx, *l.Owner, *l.Repo, *l.ID)
 		if err != nil {
 			return nil, err
@@ -285,8 +285,8 @@ func (l *Labeler) getIssue() (*github.Issue, error) {
 			i = iss.GetIssue()
 		}
 	} else {
-		ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
-		defer timeout()
+		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+		defer cancel()
 		issue, _, err := l.client.Issues.Get(ctx, *l.Owner, *l.Repo, *l.ID)
 		if err != nil {
 			return nil, err
@@ -294,28 +294,4 @@ func (l *Labeler) getIssue() (*github.Issue, error) {
 		i = issue
 	}
 	return i, nil
-}
-
-// New creates a new instance of a Labeler
-func New(owner string, repo string, event string, id int, data *string) (*Labeler, error) {
-	token, found := os.LookupEnv("GITHUB_TOKEN")
-	if !found {
-		return nil, errors.New("GITHUB_TOKEN environment variable is missing")
-	}
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-	l := &Labeler{
-		context: &ctx,
-		client:  client,
-		Owner:   &owner,
-		Repo:    &repo,
-		Event:   &event,
-		ID:      &id,
-		Data:    data,
-	}
-	return l, nil
 }
