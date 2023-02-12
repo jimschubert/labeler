@@ -20,11 +20,12 @@ var rootCmd = newRootCmd()
 //goland:noinspection GoErrorStringFormat
 func newRootCmd() *cobra.Command {
 	type options struct {
-		Owner string
-		Repo  string
-		Type  string
-		ID    int
-		Data  string
+		Owner      string
+		Repo       string
+		Type       string
+		ID         int
+		Data       string
+		ConfigPath string
 	}
 	o := options{
 		Owner: os.Getenv("GITHUB_ACTOR"),
@@ -36,7 +37,20 @@ func newRootCmd() *cobra.Command {
 		Short:   "A labeler for GitHub issues and pull requests.",
 		Version: fmt.Sprintf("%s (%s) - built: %s", version, commit, date),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			l, err := labeler.New(o.Owner, o.Repo, o.Type, o.ID, &o.Data)
+			labelOpts := make([]labeler.OptFn, 0)
+			labelOpts = append(labelOpts, labeler.WithOwner(o.Owner))
+			labelOpts = append(labelOpts, labeler.WithRepo(o.Repo))
+			labelOpts = append(labelOpts, labeler.WithEvent(o.Type))
+			if o.ID > 0 {
+				labelOpts = append(labelOpts, labeler.WithID(o.ID))
+			}
+			if o.Data != "" {
+				labelOpts = append(labelOpts, labeler.WithData(o.Data))
+			}
+			if o.ConfigPath != "" {
+				labelOpts = append(labelOpts, labeler.WithConfigPath(o.ConfigPath))
+			}
+			l, err := labeler.NewWithOptions(labelOpts...)
 			if err != nil {
 				return fmt.Errorf("could not initialize labeler: %w", err)
 			}
@@ -53,6 +67,7 @@ func newRootCmd() *cobra.Command {
 	c.Flags().StringVarP(&o.Type, "type", "t", o.Type, "The target event type to label (issues or pull_request) [GITHUB_EVENT_NAME]")
 	c.Flags().IntVarP(&o.ID, "id", "", o.ID, "The integer id of the issue or pull request")
 	c.Flags().StringVarP(&o.Data, "data", "", o.Data, "A JSON string of the 'event' type (issue event or pull request event)")
+	c.Flags().StringVarP(&o.ConfigPath, "config-path", "", o.ConfigPath, "A custom config path, relative to the repository root")
 
 	return &c
 }
