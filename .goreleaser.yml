@@ -11,34 +11,33 @@ builds:
     # Custom ldflags templates.
     # Default is `-s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser`.
     ldflags:
-      - -s -w -X main.version={{ .Version }} -X main.commit={{ .ShortCommit }} -X main.date={{ .Date }} -X main.projectName={{ .ProjectName }}
+      - -s -w -X github.com/jimschubert/labeler/cmd/labeler.version={{ .Version }} -X github.com/jimschubert/labeler/cmd/labeler.commit={{ .ShortCommit }} -X github.com/jimschubert/labeler/cmd/labeler.date={{ .Date }} -X github.com/jimschubert/labeler/cmd/labeler.projectName={{ .ProjectName }}
     goos:
       - darwin
       - linux
       - windows
     goarch:
       - amd64
-      - 386
+      - '386'
       - arm
       - arm64
     ignore:
       - goos: darwin
-        goarch: 386
+        goarch: '386'
       - goos: windows
-        goarch: 386
+        goarch: '386'
     # Path to main.go file or main package.
     # Default is `.`.
     main: ./cmd/main.go
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-
+  - rlcp: true
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     format: tar.gz
-
     format_overrides:
       - goos: windows
         format: zip
@@ -58,14 +57,13 @@ changelog:
       - '^wip:'
       - '^WIP:'
 dockers:
-  -
-    goos: linux
-    goarch: 386
+  - goos: linux
+    goarch: '386'
 
     image_templates:
-      - "docker.pkg.github.com/{{ .Env.GITHUB_ACTOR }}/{{ .ProjectName }}/{{ .ProjectName }}:latest"
-      - "docker.pkg.github.com/{{ .Env.GITHUB_ACTOR }}/{{ .ProjectName }}/{{ .ProjectName }}:{{ .Tag }}"
-      # - "docker.pkg.github.com/{{ .Env.GITHUB_ACTOR }}/{{ .ProjectName }}/{{ .ProjectName }}:v{{ .Major }}"
+      - "docker.pkg.github.com/jimschubert/labeler/labeler:latest"
+      - "docker.pkg.github.com/jimschubert/labeler/labeler:{{ .Tag }}"
+      # - "docker.pkg.github.com/jimschubert/labeler/labeler:v{{ .Major }}"
 
     dockerfile: release.Dockerfile
 
