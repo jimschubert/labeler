@@ -5,19 +5,20 @@
 A labeler for GitHub issues and pull requests.
 
 ```bash
+A labeler for GitHub issues and pull requests.
+
 Usage:
-  labeler [OPTIONS]
+  labeler [flags]
 
-Application Options:
-  -o, --owner=   GitHub Owner/Org name [$GITHUB_ACTOR]
-  -r, --repo=    GitHub Repo name [$GITHUB_REPO]
-  -t, --type=    The target event type to label (issues or pull_request) [$GITHUB_EVENT_NAME]
-      --id=      The integer id of the issue or pull request
-      --data=    A JSON string of the 'event' type (issue event or pull request event)'
-  -v, --version  Display version information
-
-Help Options:
-  -h, --help     Show this help message
+Flags:
+      --config-path string   A custom config path, relative to the repository root
+      --data string          A JSON string of the 'event' type (issue event or pull request event)
+  -h, --help                 help for labeler
+      --id int               The integer id of the issue or pull request
+  -o, --owner string         GitHub Owner/Org name [GITHUB_ACTOR]
+  -r, --repo string          GitHub Repo name [GITHUB_REPO]
+  -t, --type string          The target event type to label (issues or pull_request) [GITHUB_EVENT_NAME]
+  -v, --version              version for labeler
 ```
 
 Example usage:
@@ -30,7 +31,13 @@ This will evaluate the configuration file for the repository and apply any relev
 
 ## Configuration
 
-The configuration file must be located in the target repository at `.github/labeler.yml`, and the contents must follow either the *simple* schema or the *full* schema.
+The configuration file must be located in the target repository at `.github/labeler.yml` by default, and the contents must follow either the *simple* schema or the *full* schema.
+
+The configuration file location can be modified by passing a different path to `--config-path`. This path must be relative to the repository root. All of the following would be valid possible customizations (assuming you've created a configuration file at that location):
+
+* `.github/labeler-custom.yml`
+* `tools/labeler.yml`
+* `.labeler.yml`
 
 Feel free to use one of the following schema examples to get started. 
 
@@ -122,18 +129,24 @@ This will create an executable application for your os/architecture under `dist`
 
 ```
 dist
-├── labeler_darwin_amd64
+├── labeler_darwin_amd64_v1
+│   └── labeler
+├── labeler_darwin_arm64
 │   └── labeler
 ├── labeler_linux_386
 │   └── labeler
-├── labeler_linux_amd64
+├── labeler_linux_amd64_v1
 │   └── labeler
 ├── labeler_linux_arm64
 │   └── labeler
 ├── labeler_linux_arm_6
 │   └── labeler
-└── labeler_windows_amd64
-    └── labeler.exe
+├── labeler_windows_amd64_v1
+│   └── labeler.exe
+├── labeler_windows_arm64
+│   └── labeler.exe
+├── labeler_windows_arm_6
+│   └── labeler.exe
 ```
 
 ## License
