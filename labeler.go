@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 
-	"github.com/google/go-github/v29/github"
+	"github.com/google/go-github/v50/github"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 
@@ -73,11 +73,11 @@ func (l *Labeler) Execute() error {
 func (l *Labeler) retrieveConfig() (*model.Config, error) {
 	ctx, timeout := context.WithTimeout(*l.context, 10*time.Second)
 	defer timeout()
-	r, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, ".github/labeler.yml", &github.RepositoryContentGetOptions{})
+	r, _, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, ".github/labeler.yml", &github.RepositoryContentGetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	bytes, err := ioutil.ReadAll(r)
+	bytes, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("error reading .github/labeler.yml: %v", err)
 	}
@@ -111,7 +111,7 @@ func (l *Labeler) checkPreconditions() error {
 	return nil
 }
 
-//noinspection GoNilness
+// noinspection GoNilness
 func (l *Labeler) processIssue() error {
 	issue, err := l.getIssue()
 	if err != nil {
@@ -150,9 +150,9 @@ func (l *Labeler) processPullRequest() error {
 		return err
 	}
 
-	existingLabels := make([]github.Label, 0)
+	existingLabels := make([]*github.Label, 0)
 	for _, label := range pr.Labels {
-		existingLabels = append(existingLabels, *label)
+		existingLabels = append(existingLabels, label)
 	}
 
 	count := l.applyLabels(pr, existingLabels)
@@ -180,7 +180,7 @@ func (l *Labeler) processPullRequest() error {
 	return nil
 }
 
-func labelExists(s []github.Label, name *string) bool {
+func labelExists(s []*github.Label, name *string) bool {
 	if name != nil {
 		for _, a := range s {
 			if *a.Name == *name {
@@ -210,7 +210,7 @@ func newComment(comment string) *string {
 	return &fullComment
 }
 
-func (l *Labeler) applyLabels(i githubEvent, existingLabels []github.Label) int {
+func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int {
 	labels := (*l.config).LabelsFor(i.GetTitle(), i.GetBody())
 
 	hasNew := false
