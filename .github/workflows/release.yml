@@ -41,7 +41,7 @@ jobs:
           | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v1
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --rm-dist
