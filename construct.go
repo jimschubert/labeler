@@ -3,6 +3,7 @@ package labeler
 import (
 	"context"
 	"errors"
+	"github.com/jimschubert/labeler/model"
 	"os"
 	"strings"
 
@@ -147,7 +148,7 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 
 	// assignment
 	l.context = &options.ctx
-	l.client = options.client
+	l.client = &model.RichClient{Client: options.client}
 	l.Owner = &options.owner
 	l.Repo = &options.repo
 	l.Event = &options.event

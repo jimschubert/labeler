@@ -32,8 +32,8 @@ type Labeler struct {
 	Data       *string
 	ID         *int
 	context    *context.Context
-	client     *github.Client
-	config     *model.Config
+	client     model.Client
+	config     model.Config
 	configPath string
 }
 
@@ -68,13 +68,13 @@ func (l *Labeler) Execute() error {
 	return nil
 }
 
-func (l *Labeler) retrieveConfig() (*model.Config, error) {
+func (l *Labeler) retrieveConfig() (model.Config, error) {
 	if l.configPath == "" {
 		return nil, errors.New("the labeler configuration path can not be empty")
 	}
 	ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 	defer cancel()
-	r, _, err := l.client.Repositories.DownloadContents(ctx, *l.Owner, *l.Repo, l.configPath, &github.RepositoryContentGetOptions{})
+	r, _, err := l.client.DownloadContents(ctx, *l.Owner, *l.Repo, l.configPath, &github.RepositoryContentGetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (l *Labeler) retrieveConfig() (*model.Config, error) {
 		}
 	}
 	log.WithFields(log.Fields{l.configPath: c}).Debugf("Parsed %q", l.configPath)
-	return &c, nil
+	return c, nil
 }
 
 func (l *Labeler) checkPreconditions() error {
@@ -126,7 +126,7 @@ func (l *Labeler) processIssue() error {
 	count := l.applyLabels(issue, existingLabels)
 	if count > 0 {
 		var comment *string
-		switch v := (*l.config).(type) {
+		switch v := (l.config).(type) {
 		case *model.FullConfig:
 			if v != nil && v.Comments != nil {
 				comment = v.Comments.Issues
@@ -160,7 +160,7 @@ func (l *Labeler) processPullRequest() error {
 	count := l.applyLabels(pr, existingLabels)
 	if count > 0 {
 		var comment *string
-		switch v := (*l.config).(type) {
+		switch v := (l.config).(type) {
 		case *model.FullConfig:
 			if v != nil && v.Comments != nil {
 				comment = v.Comments.PullRequests
@@ -199,7 +199,7 @@ func (l *Labeler) addComment(comment *string) error {
 		issueComment := &github.IssueComment{
 			Body: newComment(*comment),
 		}
-		_, _, err := l.client.Issues.CreateComment(ctx, *l.Owner, *l.Repo, *l.ID, issueComment)
+		_, _, err := l.client.CreateComment(ctx, *l.Owner, *l.Repo, *l.ID, issueComment)
 		return err
 	}
 	return nil
@@ -211,7 +211,7 @@ func newComment(comment string) *string {
 }
 
 func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int {
-	labels := (*l.config).LabelsFor(i.GetTitle(), i.GetBody())
+	labels := l.config.LabelsFor(i.GetTitle(), i.GetBody())
 
 	hasNew := false
 
@@ -226,7 +226,7 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 		defer cancel()
 
-		added, _, err := l.client.Issues.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, labels)
+		added, _, err := l.client.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, labels)
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Debug("Unable to add labels to issue.")
 			return 0
@@ -260,7 +260,7 @@ func (l *Labeler) getPullRequest() (*github.PullRequest, error) {
 	} else {
 		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 		defer cancel()
-		pull, _, err := l.client.PullRequests.Get(ctx, *l.Owner, *l.Repo, *l.ID)
+		pull, _, err := l.client.GetPullRequest(ctx, *l.Owner, *l.Repo, *l.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +287,7 @@ func (l *Labeler) getIssue() (*github.Issue, error) {
 	} else {
 		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 		defer cancel()
-		issue, _, err := l.client.Issues.Get(ctx, *l.Owner, *l.Repo, *l.ID)
+		issue, _, err := l.client.GetIssue(ctx, *l.Owner, *l.Repo, *l.ID)
 		if err != nil {
 			return nil, err
 		}
