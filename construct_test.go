@@ -9,6 +9,11 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	skipTokenCheck = true
+	defer func() {
+		skipTokenCheck = false
+	}()
+
 	type args struct {
 		owner string
 		repo  string
@@ -71,6 +76,11 @@ func TestNew(t *testing.T) {
 
 func TestNewWithOptions(t *testing.T) {
 	childContext, cancel := context.WithCancel(context.Background())
+	skipTokenCheck = true
+	defer func() {
+		skipTokenCheck = false
+	}()
+
 	t.Cleanup(func() {
 		// so tooling doesn't complain about dropping a cancel func
 		cancel()

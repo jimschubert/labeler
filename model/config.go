@@ -6,5 +6,5 @@ type Config interface {
 	FromBytes(b []byte) error
 
 	// LabelsFor allows config implementations to determine the labels to be applied to the input strings
-	LabelsFor(text ...string) []string
+	LabelsFor(text ...string) map[string]Label
 }

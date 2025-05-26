@@ -24,7 +24,7 @@ Flags:
 Example usage:
 ```bash
 export GITHUB_TOKEN=yourtoken
-./labeler -o jimschubert -r labeler -type pull_request -id 1
+./labeler -o jimschubert -r labeler --type pull_request --id 1
 ```
 
 This will evaluate the configuration file for the repository and apply any relevant labels to PR #1.

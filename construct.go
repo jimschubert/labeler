@@ -3,12 +3,15 @@ package labeler
 import (
 	"context"
 	"errors"
+	"github.com/jimschubert/labeler/model"
 	"os"
 	"strings"
 
 	"github.com/google/go-github/v50/github"
 	"golang.org/x/oauth2"
 )
+
+var skipTokenCheck = false
 
 // Opt is a group of options for constructing a new Labeler
 type Opt struct {
@@ -134,18 +137,8 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 
 	if options.client == nil {
 		// only validate the token when constructing this default client. Otherwise, assume the caller has property constructed a client
-		if options.token == "" {
-			isTest := false
-			// hack: only apply this required token check if not in tests.
-			// this isn't a concern if we construct with an empty token because the client will error at invocation
-			for _, arg := range os.Args {
-				if strings.HasPrefix(arg, "-test.v") {
-					isTest = true
-				}
-			}
-			if !isTest {
-				return nil, errors.New("github token (e.g. GITHUB_TOKEN environment variable) is required")
-			}
+		if options.token == "" && !skipTokenCheck {
+			return nil, errors.New("github token (e.g. GITHUB_TOKEN environment variable) is required")
 		}
 
 		options.client = github.NewClient(oauth2.NewClient(options.ctx, oauth2.StaticTokenSource(
@@ -153,9 +146,13 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 		)))
 	}
 
+	if options.configPath == "" {
+		options.configPath = ".github/labeler.yml"
+	}
+
 	// assignment
 	l.context = &options.ctx
-	l.client = options.client
+	l.client = &model.RichClient{Client: options.client}
 	l.Owner = &options.owner
 	l.Repo = &options.repo
 	l.Event = &options.event
@@ -179,7 +176,5 @@ func New(owner string, repo string, event string, id int, data *string) (*Labele
 		WithEvent(event),
 		WithID(id),
 		WithData(*data),
-		WithContext(context.Background()),
-		WithConfigPath(".github/labeler.yml"),
 	)
 }

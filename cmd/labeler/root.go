@@ -12,6 +12,9 @@ import (
 var version = "unk"
 var date = "unk"
 var commit = "unk"
+
+//goland:noinspection ALL
+//nolint:unused
 var projectName = "labeler"
 
 // rootCmd represents the base command when called without any subcommands
