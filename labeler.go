@@ -56,15 +56,9 @@ func (l *Labeler) Execute() error {
 
 	switch *l.Event {
 	case issue:
-		err = l.processIssue()
-		if err != nil {
-			return err
-		}
+		return l.processIssue()
 	case pullRequestTarget, pullRequest:
-		err = l.processPullRequest()
-		if err != nil {
-			return err
-		}
+		return l.processPullRequest()
 	}
 
 	return nil
@@ -76,13 +70,12 @@ func (l *Labeler) retrieveConfig() (model.Config, error) {
 	}
 	ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 	defer cancel()
+
 	r, _, err := l.client.DownloadContents(ctx, *l.Owner, *l.Repo, l.configPath, &github.RepositoryContentGetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = r.Close()
-	}()
+	defer r.Close()
 
 	bytes, err := io.ReadAll(r)
 	if err != nil {
@@ -91,16 +84,18 @@ func (l *Labeler) retrieveConfig() (model.Config, error) {
 
 	var c model.Config
 	c = &model.FullConfig{}
-	err = c.FromBytes(bytes)
-	if err != nil {
-		c = &model.SimpleConfig{}
-		err = c.FromBytes(bytes)
-		if err != nil {
-			return nil, fmt.Errorf("could not parse %q", l.configPath)
-		}
+	if err = c.FromBytes(bytes); err == nil {
+		log.WithFields(log.Fields{l.configPath: c}).Debugf("Parsed %q as FullConfig", l.configPath)
+		return c, nil
 	}
-	log.WithFields(log.Fields{l.configPath: c}).Debugf("Parsed %q", l.configPath)
-	return c, nil
+
+	c = &model.SimpleConfig{}
+	if err = c.FromBytes(bytes); err == nil {
+		log.WithFields(log.Fields{l.configPath: c}).Debugf("Parsed %q as SimpleConfig", l.configPath)
+		return c, nil
+	}
+
+	return nil, fmt.Errorf("could not parse %q", l.configPath)
 }
 
 func (l *Labeler) checkPreconditions() error {
@@ -124,11 +119,10 @@ func (l *Labeler) processIssue() error {
 		return err
 	}
 
-	existingLabels := issue.Labels
-	count := l.applyLabels(issue, existingLabels)
+	count := l.applyLabels(issue, issue.Labels)
 	if count > 0 {
 		var comment *string
-		switch v := (l.config).(type) {
+		switch v := l.config.(type) {
 		case *model.FullConfig:
 			if v != nil && v.Comments != nil {
 				comment = v.Comments.Issues
@@ -138,13 +132,10 @@ func (l *Labeler) processIssue() error {
 				comment = &v.Comment
 			}
 		}
-
-		err := l.addComment(comment)
-		if err != nil {
+		if err := l.addComment(comment); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -154,13 +145,10 @@ func (l *Labeler) processPullRequest() error {
 		return err
 	}
 
-	existingLabels := make([]*github.Label, 0)
-	existingLabels = append(existingLabels, pr.Labels...)
-
-	count := l.applyLabels(pr, existingLabels)
+	count := l.applyLabels(pr, pr.Labels)
 	if count > 0 {
 		var comment *string
-		switch v := (l.config).(type) {
+		switch v := l.config.(type) {
 		case *model.FullConfig:
 			if v != nil && v.Comments != nil {
 				comment = v.Comments.PullRequests
@@ -170,13 +158,10 @@ func (l *Labeler) processPullRequest() error {
 				comment = &v.Comment
 			}
 		}
-
-		err := l.addComment(comment)
-		if err != nil {
+		if err := l.addComment(comment); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -222,7 +207,7 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 		if len(label.Branches) > 0 && targetBranch != "" {
 			for _, branch := range label.Branches {
 				re := regexp.MustCompile(branch)
-				if re.Match([]byte(targetBranch)) {
+				if re.MatchString(targetBranch) {
 					filteredLabels[name] = label
 					break
 				}
@@ -232,89 +217,64 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 		}
 	}
 
-	hasNew := false
-
-	for name := range filteredLabels {
-		if hasNew {
-			break
+	newLabels := make([]string, 0, len(filteredLabels))
+	for name := range maps.Keys(filteredLabels) {
+		if !labelExists(existingLabels, &name) {
+			newLabels = append(newLabels, name)
 		}
-		hasNew = !labelExists(existingLabels, &name)
 	}
 
-	if hasNew {
+	if len(newLabels) > 0 {
 		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 		defer cancel()
-
-		newLabels := make([]string, 0, len(filteredLabels))
-		for m := range maps.Keys(filteredLabels) {
-			newLabels = append(newLabels, m)
-		}
 		added, _, err := l.client.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, newLabels)
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Debug("Unable to add labels to issue.")
 			return 0
 		}
-
-		num := len(added)
-		log.Debugf("Found %d new labels to apply", num)
-		return num
-	} else {
-		log.Debug("Found 0 labels to apply")
+		log.Debugf("Found %d new labels to apply", len(added))
+		return len(added)
 	}
 
+	log.Debug("Found 0 labels to apply")
 	return 0
 }
 
 func (l *Labeler) getPullRequest() (*github.PullRequest, error) {
-	var pr *github.PullRequest
 	if l.Data != nil {
-		var pre *github.PullRequestEvent = nil
+		var pre github.PullRequestEvent
 		b := []byte(*l.Data)
-		err := json.Unmarshal(b, &pre)
-		if err != nil {
-			err = json.Unmarshal(b, &pr)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			//noinspection GoNilness
-			pr = pre.GetPullRequest()
+		if err := json.Unmarshal(b, &pre); err == nil && pre.PullRequest != nil {
+			return pre.GetPullRequest(), nil
 		}
-	} else {
-		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
-		defer cancel()
-		pull, _, err := l.client.GetPullRequest(ctx, *l.Owner, *l.Repo, *l.ID)
-		if err != nil {
-			return nil, err
+		var pr github.PullRequest
+		if err := json.Unmarshal(b, &pr); err == nil {
+			return &pr, nil
 		}
-		pr = pull
+		return nil, errors.New("failed to unmarshal pull request data")
 	}
-	return pr, nil
+
+	ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+	defer cancel()
+	pr, _, err := l.client.GetPullRequest(ctx, *l.Owner, *l.Repo, *l.ID)
+	return pr, err
 }
 
 func (l *Labeler) getIssue() (*github.Issue, error) {
-	var i *github.Issue
 	if l.Data != nil {
-		var iss *github.IssuesEvent = nil
-		b := []byte(*l.Data)
-		err := json.Unmarshal(b, &iss)
-		if err != nil {
-			err = json.Unmarshal(b, &i)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			//noinspection GoNilness
-			i = iss.GetIssue()
+		var iss github.IssuesEvent
+		if err := json.Unmarshal([]byte(*l.Data), &iss); err == nil && iss.Issue != nil {
+			return iss.GetIssue(), nil
 		}
-	} else {
-		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
-		defer cancel()
-		issue, _, err := l.client.GetIssue(ctx, *l.Owner, *l.Repo, *l.ID)
-		if err != nil {
-			return nil, err
+		var i github.Issue
+		if err := json.Unmarshal([]byte(*l.Data), &i); err == nil {
+			return &i, nil
 		}
-		i = issue
+		return nil, errors.New("failed to unmarshal issue data")
 	}
-	return i, nil
+	ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
+	defer cancel()
+	result, _, err := l.client.GetIssue(ctx, *l.Owner, *l.Repo, *l.ID)
+
+	return result, err
 }
