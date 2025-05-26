@@ -28,19 +28,20 @@ func (s *SimpleConfig) FromBytes(b []byte) error {
 func (s *SimpleConfig) LabelsFor(text ...string) map[string]Label {
 	searchable := []byte(strings.Join(text, " "))
 	labels := make(map[string]Label)
-	for key, values := range s.Labels {
-		label := &Label{}
-		for _, pattern := range values {
+	for key, patterns := range s.Labels {
+		var include []string
+		for _, pattern := range patterns {
 			re := regexp.MustCompile(pattern)
 			if re.Match(searchable) {
-				label.Include = append(label.Include, pattern)
+				include = append(include, pattern)
 			}
 		}
-
-		if len(label.Include) > 0 {
-			label.Exclude = []string{}
-			label.Branches = s.Branches[key]
-			labels[key] = *label
+		if len(include) > 0 {
+			labels[key] = Label{
+				Include:  include,
+				Exclude:  []string{},
+				Branches: s.Branches[key],
+			}
 		}
 	}
 	return labels

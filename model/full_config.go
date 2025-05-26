@@ -55,16 +55,16 @@ func (f *FullConfig) LabelsFor(text ...string) map[string]Label {
 	searchable := []byte(strings.Join(text, " "))
 	labels := make(map[string]Label)
 	for key, values := range f.Labels {
-		shouldLabel := true
+		excluded := false
 		for _, pattern := range values.Exclude {
 			re := regexp.MustCompile(pattern)
 			if re.Match(searchable) {
-				shouldLabel = false
+				excluded = true
 				break
 			}
 		}
 
-		if !shouldLabel {
+		if excluded {
 			break
 		}
 
@@ -72,6 +72,7 @@ func (f *FullConfig) LabelsFor(text ...string) map[string]Label {
 			re := regexp.MustCompile(pattern)
 			if re.Match(searchable) {
 				labels[key] = values
+				break
 			}
 		}
 	}
