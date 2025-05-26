@@ -146,6 +146,10 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 		)))
 	}
 
+	if options.configPath == "" {
+		options.configPath = ".github/labeler.yml"
+	}
+
 	// assignment
 	l.context = &options.ctx
 	l.client = &model.RichClient{Client: options.client}
@@ -172,7 +176,5 @@ func New(owner string, repo string, event string, id int, data *string) (*Labele
 		WithEvent(event),
 		WithID(id),
 		WithData(*data),
-		WithContext(context.Background()),
-		WithConfigPath(".github/labeler.yml"),
 	)
 }
