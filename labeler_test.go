@@ -344,6 +344,73 @@ labels:
 	mockClient.AssertExpectations(t)
 }
 
+func TestLabeler_Execute_targeted_branch_regex(t *testing.T) {
+	ctx := context.Background()
+	mockClient := new(mockRichClient)
+
+	l := &Labeler{
+		Owner:      ptr("owner"),
+		Repo:       ptr("repo"),
+		Event:      ptr("pull_request_target"),
+		ID:         ptr(1),
+		context:    &ctx,
+		client:     mockClient,
+		configPath: ".github/labeler.yml",
+	}
+	mockClient.On("DownloadContents", mock.Anything, "owner", "repo", ".github/labeler.yml", mock.Anything).
+		Return(io.NopCloser(bytes.NewReader([]byte(
+			`enable:
+  issues: false
+  prs: true
+
+comments:
+  prs: |
+    I applied labels to your pull request.
+
+    Please review the labels.
+
+labels:
+  'bug':
+    include:
+      - '\bbug[s]?\b'
+    exclude: []
+    branches:
+      - main
+      - develop
+      - feature\/yes
+  'deploy':
+    include:
+      - '\bJIRA-\d{1,}\b'
+    branches:
+      - production
+  'help wanted':
+    include:
+      - '\bhelp( me)?\b'
+    exclude:
+      - '\b\[test(ing)?\]\b'
+  'enhancement':
+    include:
+      - '\bfeat\b'
+    exclude: []
+    branches:
+      - feature\/.+
+
+`))), nil, nil)
+	mockClient.On("GetPullRequest", mock.Anything, "owner", "repo", 1).
+		Return(&github.PullRequest{Title: ptr("feat: wakka wakka"), Body: ptr("some enhancement or bug"), Base: &github.PullRequestBranch{Ref: ptr("feature/yes")}}, nil, nil)
+
+	mockClient.On("AddLabelsToIssue", mock.Anything, "owner", "repo", 1, mock.Anything).
+		Return([]*github.Label{{Name: ptr("bug")}, {Name: ptr("enhancement")}}, nil, nil)
+
+	mockClient.On("CreateComment", mock.Anything, "owner", "repo", 1, mock.Anything).Return(nil, nil, nil)
+
+	err := l.Execute()
+	assert.NoError(t, err)
+	mockClient.AssertNumberOfCalls(t, "AddLabelsToIssue", 1)
+	mockClient.AssertNumberOfCalls(t, "CreateComment", 1)
+	mockClient.AssertExpectations(t)
+}
+
 func TestLabeler_Execute_fail_to_parse_config(t *testing.T) {
 	ctx := context.Background()
 	mockClient := new(mockRichClient)

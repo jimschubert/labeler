@@ -174,3 +174,46 @@ func TestSimpleConfig_LabelsFor(t *testing.T) {
 		})
 	}
 }
+
+func TestSimpleConfig_LabelsFor_withBranches(t *testing.T) {
+	config := SimpleConfig{
+		Labels: map[string][]string{
+			"bug":      {`bug`},
+			"question": {`question`},
+		},
+		Branches: map[string][]string{
+			"bug":      {"main", "develop"},
+			"question": {"feature/.+"},
+		},
+	}
+
+	tests := []struct {
+		name     string
+		input    []string
+		expected map[string]Label
+	}{
+		{
+			name:  "single label match on main branch",
+			input: []string{"This is a bug report"},
+			expected: map[string]Label{
+				"bug": {
+					Include:  []string{`bug`},
+					Exclude:  []string{},
+					Branches: []string{"main", "develop"},
+				},
+			},
+		},
+		{
+			name:     "no label match",
+			input:    []string{"This is a feature request"},
+			expected: map[string]Label{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := config.LabelsFor(tt.input...)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
