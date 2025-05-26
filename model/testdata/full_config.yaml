@@ -16,6 +16,9 @@ labels:
     include:
       - '\bbug[s]?\b'
     exclude: []
+    branches:
+      - main
+      - develop
   'help wanted':
     include:
       - '\bhelp( me)?\b'

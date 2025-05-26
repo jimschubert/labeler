@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
+	"regexp"
 	"time"
 
 	"github.com/google/go-github/v50/github"
@@ -153,9 +155,7 @@ func (l *Labeler) processPullRequest() error {
 	}
 
 	existingLabels := make([]*github.Label, 0)
-	for _, label := range pr.Labels {
-		existingLabels = append(existingLabels, label)
-	}
+	existingLabels = append(existingLabels, pr.Labels...)
 
 	count := l.applyLabels(pr, existingLabels)
 	if count > 0 {
@@ -211,22 +211,45 @@ func newComment(comment string) *string {
 }
 
 func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int {
+	targetBranch := ""
+	if pr, ok := i.(*github.PullRequest); ok && pr != nil && pr.Base != nil && pr.Base.Ref != nil {
+		targetBranch = *pr.Base.Ref
+	}
+
 	labels := l.config.LabelsFor(i.GetTitle(), i.GetBody())
+	filteredLabels := make(map[string]model.Label)
+	for name, label := range labels {
+		if len(label.Branches) > 0 && targetBranch != "" {
+			for _, branch := range label.Branches {
+				re := regexp.MustCompile(branch)
+				if re.Match([]byte(targetBranch)) {
+					filteredLabels[name] = label
+					break
+				}
+			}
+		} else if len(label.Branches) == 0 {
+			filteredLabels[name] = label
+		}
+	}
 
 	hasNew := false
 
-	for _, label := range labels {
+	for name := range filteredLabels {
 		if hasNew {
 			break
 		}
-		hasNew = !labelExists(existingLabels, &label)
+		hasNew = !labelExists(existingLabels, &name)
 	}
 
 	if hasNew {
 		ctx, cancel := context.WithTimeout(*l.context, 10*time.Second)
 		defer cancel()
 
-		added, _, err := l.client.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, labels)
+		newLabels := make([]string, 0, len(filteredLabels))
+		for m := range maps.Keys(filteredLabels) {
+			newLabels = append(newLabels, m)
+		}
+		added, _, err := l.client.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, newLabels)
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Debug("Unable to add labels to issue.")
 			return 0

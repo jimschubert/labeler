@@ -28,8 +28,9 @@ func TestFullConfig_FromBytes(t *testing.T) {
 			fields{
 				Labels: map[string]Label{
 					"bug": {
-						Include: []string{"\\bbug[s]?\\b"},
-						Exclude: []string{},
+						Include:  []string{"\\bbug[s]?\\b"},
+						Exclude:  []string{},
+						Branches: []string{"main", "develop"},
 					},
 					"enhancement": {
 						Include: []string{"\\bfeat\\b"},

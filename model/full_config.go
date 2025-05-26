@@ -23,8 +23,9 @@ type (
 
 	// Label holds the rules around how labels will be applied
 	Label struct {
-		Include []string `yaml:"include,omitempty,flow"`
-		Exclude []string `yaml:"exclude,omitempty,flow"`
+		Include  []string `yaml:"include,omitempty,flow"`
+		Exclude  []string `yaml:"exclude,omitempty,flow"`
+		Branches []string `yaml:"branches,omitempty,flow"`
 	}
 
 	// FullConfig is the container defining how the configuration object is structured
@@ -42,7 +43,7 @@ func (f *FullConfig) FromBytes(b []byte) error {
 		return err
 	}
 
-	if f.Labels == nil || len(f.Labels) == 0 {
+	if len(f.Labels) == 0 {
 		return errors.New("full config requires labels to be defined")
 	}
 
@@ -50,9 +51,9 @@ func (f *FullConfig) FromBytes(b []byte) error {
 }
 
 // LabelsFor allows config implementations to determine the labels to be applied to the input strings
-func (f *FullConfig) LabelsFor(text ...string) []string {
+func (f *FullConfig) LabelsFor(text ...string) map[string]Label {
 	searchable := []byte(strings.Join(text, " "))
-	labels := make([]string, 0)
+	labels := make(map[string]Label)
 	for key, values := range f.Labels {
 		shouldLabel := true
 		for _, pattern := range values.Exclude {
@@ -62,13 +63,15 @@ func (f *FullConfig) LabelsFor(text ...string) []string {
 				break
 			}
 		}
+
 		if !shouldLabel {
 			break
 		}
+
 		for _, pattern := range values.Include {
 			re := regexp.MustCompile(pattern)
 			if re.Match(searchable) {
-				labels = append(labels, key)
+				labels[key] = values
 			}
 		}
 	}

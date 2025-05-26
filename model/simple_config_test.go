@@ -165,7 +165,12 @@ func TestSimpleConfig_LabelsFor(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.config.LabelsFor(tt.input...)
-			assert.ElementsMatch(t, tt.expected, got)
+			// Convert map keys to a slice for comparison
+			var gotKeys []string
+			for key := range got {
+				gotKeys = append(gotKeys, key)
+			}
+			assert.ElementsMatch(t, tt.expected, gotKeys)
 		})
 	}
 }

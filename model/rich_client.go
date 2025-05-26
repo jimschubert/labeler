@@ -32,36 +32,36 @@ type RichClient struct {
 }
 
 func (r *RichClient) DownloadContents(ctx context.Context, owner, repo, filepath string, opts *github.RepositoryContentGetOptions) (io.ReadCloser, *github.Response, error) {
-	if r.Client.Repositories == nil {
+	if r.Repositories == nil {
 		return nil, nil, nil
 	}
-	return r.Client.Repositories.DownloadContents(ctx, owner, repo, filepath, opts)
+	return r.Repositories.DownloadContents(ctx, owner, repo, filepath, opts)
 }
 
 func (r *RichClient) CreateComment(ctx context.Context, owner string, repo string, number int, comment *github.IssueComment) (*github.IssueComment, *github.Response, error) {
-	if r.Client.Issues == nil {
+	if r.Issues == nil {
 		return nil, nil, nil
 	}
-	return r.Client.Issues.CreateComment(ctx, owner, repo, number, comment)
+	return r.Issues.CreateComment(ctx, owner, repo, number, comment)
 }
 
 func (r *RichClient) AddLabelsToIssue(ctx context.Context, owner string, repo string, number int, labels []string) ([]*github.Label, *github.Response, error) {
-	if r.Client.Issues == nil {
+	if r.Issues == nil {
 		return nil, nil, nil
 	}
-	return r.Client.Issues.AddLabelsToIssue(ctx, owner, repo, number, labels)
+	return r.Issues.AddLabelsToIssue(ctx, owner, repo, number, labels)
 }
 
 func (r *RichClient) GetIssue(ctx context.Context, owner string, repo string, number int) (*github.Issue, *github.Response, error) {
-	if r.Client.Issues == nil {
+	if r.Issues == nil {
 		return nil, nil, nil
 	}
-	return r.Client.Issues.Get(ctx, owner, repo, number)
+	return r.Issues.Get(ctx, owner, repo, number)
 }
 
 func (r *RichClient) GetPullRequest(ctx context.Context, owner string, repo string, number int) (*github.PullRequest, *github.Response, error) {
-	if r.Client.PullRequests == nil {
+	if r.PullRequests == nil {
 		return nil, nil, nil
 	}
-	return r.Client.PullRequests.Get(ctx, owner, repo, number)
+	return r.PullRequests.Get(ctx, owner, repo, number)
 }
