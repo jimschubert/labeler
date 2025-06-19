@@ -37,6 +37,7 @@ type Labeler struct {
 	client     model.Client
 	config     model.Config
 	configPath string
+	fieldFlag  FieldFlag
 }
 
 // Execute performs the labeler logic
@@ -201,7 +202,18 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 		targetBranch = *pr.Base.Ref
 	}
 
-	labels := l.config.LabelsFor(i.GetTitle(), i.GetBody())
+	flags := l.fieldFlag.OrDefault()
+	fields := make([]string, 0)
+
+	if flags.Has(FieldTitle) {
+		fields = append(fields, i.GetTitle())
+	}
+
+	if flags.Has(FieldBody) {
+		fields = append(fields, i.GetBody())
+	}
+
+	labels := l.config.LabelsFor(fields...)
 	filteredLabels := make(map[string]model.Label)
 	for name, label := range labels {
 		if len(label.Branches) > 0 && targetBranch != "" {

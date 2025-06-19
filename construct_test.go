@@ -68,6 +68,7 @@ func TestNew(t *testing.T) {
 				assert.Equal(t, tt.args.repo, *got.Repo)
 				assert.Equal(t, tt.args.event, *got.Event)
 				assert.Equal(t, tt.args.id, *got.ID)
+				assert.Equal(t, AllFieldFlags, got.fieldFlag)
 				assert.Equal(t, ".github/labeler.yml", got.configPath)
 			}
 		})
@@ -141,6 +142,7 @@ func TestNewWithOptions(t *testing.T) {
 				assert.Equal(t, ptr("jimschubert"), l.Owner)
 				assert.Equal(t, ptr("example"), l.Repo)
 				assert.Equal(t, ptr(1000), l.ID)
+				assert.Equal(t, AllFieldFlags, l.fieldFlag)
 
 				assert.NotNil(t, l.context, "Should have created a default context")
 				assert.NotNil(t, l.client, "Should have created a default github client")
@@ -155,7 +157,7 @@ func TestNewWithOptions(t *testing.T) {
 					WithOwner("jimschubert"), WithRepo("example"), WithID(1000),
 
 					// optional fields
-					WithContext(childContext), WithConfigPath(".github/labeler-custom.yml"), WithData("{}"), WithToken("irrelevant"),
+					WithContext(childContext), WithConfigPath(".github/labeler-custom.yml"), WithData("{}"), WithToken("irrelevant"), WithFields(AllFieldFlags),
 				},
 			},
 			validate: func(l *Labeler) {
@@ -163,6 +165,7 @@ func TestNewWithOptions(t *testing.T) {
 				assert.Equal(t, ptr("example"), l.Repo)
 				assert.Equal(t, ptr("{}"), l.Data)
 				assert.Equal(t, ptr(1000), l.ID)
+				assert.Equal(t, AllFieldFlags, l.fieldFlag)
 
 				assert.NotNil(t, l.context, "Should have created a default context")
 				assert.NotNil(t, l.client, "Should have created a default github client")
