@@ -241,7 +241,7 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 		defer cancel()
 		added, _, err := l.client.AddLabelsToIssue(ctx, *l.Owner, *l.Repo, *l.ID, newLabels)
 		if err != nil {
-			log.WithFields(log.Fields{"err": err}).Debug("Unable to add labels to issue.")
+			log.WithFields(log.Fields{"err": err}).Error("Unable to add labels to issue.")
 			return 0
 		}
 		log.Debugf("Found %d new labels to apply", len(added))

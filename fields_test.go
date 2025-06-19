@@ -59,6 +59,7 @@ func TestParseFieldFlags(t *testing.T) {
 		{"Empty slice", []string{}, 0},
 		{"Single title", []string{"title"}, FieldTitle},
 		{"Single body", []string{"body"}, FieldBody},
+		{"Single description (alternate)", []string{"description"}, FieldBody},
 		{"Both fields", []string{"title", "body"}, AllFieldFlags},
 		{"Duplicate fields", []string{"title", "title"}, FieldTitle},
 		{"Unknown field", []string{"unknown"}, 0},

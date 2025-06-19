@@ -35,7 +35,7 @@ func ParseFieldFlags(fields []string) FieldFlag {
 		switch f {
 		case "title":
 			flags |= FieldTitle
-		case "body":
+		case "body", "description":
 			flags |= FieldBody
 		}
 	}
