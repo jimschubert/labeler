@@ -24,6 +24,7 @@ type Opt struct {
 	id         int
 	data       string
 	configPath string
+	fieldFlags FieldFlag
 }
 
 type OptFn func(o *Opt)
@@ -95,15 +96,23 @@ func WithConfigPath(value string) OptFn {
 	}
 }
 
+// WithFields allows for configuring the fields to evaluate for labeling
+func WithFields(fieldFlag FieldFlag) OptFn {
+	return func(o *Opt) {
+		o.fieldFlags = fieldFlag.OrDefault()
+	}
+}
+
 // NewWithOptions constructs a new Labeler with functional arguments of type OptFn
 func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 	l := Labeler{}
 	options := Opt{
-		token: os.Getenv("GITHUB_TOKEN"),
-		owner: os.Getenv("GITHUB_ACTOR"),
-		repo:  os.Getenv("GITHUB_REPO"),
-		event: os.Getenv("GITHUB_EVENT_NAME"),
-		id:    -1,
+		token:      os.Getenv("GITHUB_TOKEN"),
+		owner:      os.Getenv("GITHUB_ACTOR"),
+		repo:       os.Getenv("GITHUB_REPO"),
+		event:      os.Getenv("GITHUB_EVENT_NAME"),
+		id:         -1,
+		fieldFlags: AllFieldFlags,
 	}
 
 	for _, opt := range opts {
@@ -157,6 +166,7 @@ func NewWithOptions(opts ...OptFn) (*Labeler, error) {
 	l.Repo = &options.repo
 	l.Event = &options.event
 	l.ID = &options.id
+	l.fieldFlag = options.fieldFlags
 	if options.data != "" {
 		l.Data = &options.data
 	}

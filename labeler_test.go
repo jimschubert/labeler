@@ -155,6 +155,33 @@ func TestLabeler_applyLabels(t *testing.T) {
 	mockClient.AssertExpectations(t)
 }
 
+func TestLabeler_applyLabelsCustomizedFields(t *testing.T) {
+	ctx := context.Background()
+	mockClient := new(mockRichClient)
+
+	mockCfg := new(mockConfig)
+	l := &Labeler{
+		Owner:     ptr("owner"),
+		Repo:      ptr("repo"),
+		ID:        ptr(1),
+		fieldFlag: FieldTitle,
+		context:   &ctx,
+		client:    mockClient,
+		config:    mockCfg,
+	}
+	mockCfg.On("LabelsFor", "title").Return(map[string]model.Label{
+		"bug": {},
+	})
+	mockClient.On("AddLabelsToIssue", mock.Anything, "owner", "repo", 1, []string{"bug"}).
+		Return([]*github.Label{{Name: ptr("bug")}}, nil, nil)
+	ev := &testEvent{title: "title", body: "body"}
+	count := l.applyLabels(ev, []*github.Label{})
+	assert.Equal(t, 1, count)
+
+	mockClient.AssertNumberOfCalls(t, "AddLabelsToIssue", 1)
+	mockClient.AssertExpectations(t)
+}
+
 func TestLabeler_addComment(t *testing.T) {
 	ctx := context.Background()
 	mockClient := new(mockRichClient)

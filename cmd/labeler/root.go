@@ -29,6 +29,7 @@ func newRootCmd() *cobra.Command {
 		ID         int
 		Data       string
 		ConfigPath string
+		Fields     []string
 	}
 	o := options{
 		Owner: os.Getenv("GITHUB_ACTOR"),
@@ -53,6 +54,11 @@ func newRootCmd() *cobra.Command {
 			if o.ConfigPath != "" {
 				labelOpts = append(labelOpts, labeler.WithConfigPath(o.ConfigPath))
 			}
+			if len(o.Fields) > 0 {
+				fieldFlags := labeler.ParseFieldFlags(o.Fields)
+				labelOpts = append(labelOpts, labeler.WithFields(fieldFlags))
+			}
+
 			l, err := labeler.NewWithOptions(labelOpts...)
 			if err != nil {
 				return fmt.Errorf("could not initialize labeler: %w", err)
@@ -68,6 +74,7 @@ func newRootCmd() *cobra.Command {
 	c.Flags().StringVarP(&o.Owner, "owner", "o", o.Owner, "GitHub Owner/Org name [GITHUB_ACTOR]")
 	c.Flags().StringVarP(&o.Repo, "repo", "r", o.Repo, "GitHub Repo name [GITHUB_REPO]")
 	c.Flags().StringVarP(&o.Type, "type", "t", o.Type, "The target event type to label (issues or pull_request) [GITHUB_EVENT_NAME]")
+	c.Flags().StringSliceVar(&o.Fields, "fields", []string{"title", "body"}, "Fields to evaluate for labeling (title, body)")
 	c.Flags().IntVarP(&o.ID, "id", "", o.ID, "The integer id of the issue or pull request")
 	c.Flags().StringVarP(&o.Data, "data", "", o.Data, "A JSON string of the 'event' type (issue event or pull request event)")
 	c.Flags().StringVarP(&o.ConfigPath, "config-path", "", o.ConfigPath, "A custom config path, relative to the repository root")
