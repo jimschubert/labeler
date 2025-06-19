@@ -33,6 +33,7 @@ type (
 		Enable   *Enable          `yaml:"enable,omitempty"`
 		Comments *Comments        `yaml:"comments,omitempty"`
 		Labels   map[string]Label `yaml:"labels,flow"`
+		Fields   []string         `yaml:"fields,omitempty,flow"`
 	}
 )
 
@@ -48,6 +49,18 @@ func (f *FullConfig) FromBytes(b []byte) error {
 	}
 
 	return nil
+}
+
+// IncludedFields returns the fields that are used for labeling, if not defined, it returns an empty slice
+func (f *FullConfig) IncludedFields() []string {
+	fields := make([]string, 0)
+	if f.Fields == nil || len(f.Fields) == 0 {
+		return fields
+	}
+	for _, field := range f.Fields {
+		fields = append(fields, strings.ToLower(field))
+	}
+	return fields
 }
 
 // LabelsFor allows config implementations to determine the labels to be applied to the input strings

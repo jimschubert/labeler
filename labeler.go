@@ -205,6 +205,10 @@ func (l *Labeler) applyLabels(i githubEvent, existingLabels []*github.Label) int
 	flags := l.fieldFlag.OrDefault()
 	fields := make([]string, 0)
 
+	if overrideFields, ok := l.config.(*model.FullConfig); ok && len(overrideFields.Fields) > 0 {
+		flags = ParseFieldFlags(overrideFields.Fields)
+	}
+
 	if flags.Has(FieldTitle) {
 		fields = append(fields, i.GetTitle())
 	}

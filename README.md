@@ -13,12 +13,14 @@ Usage:
 Flags:
       --config-path string   A custom config path, relative to the repository root
       --data string          A JSON string of the 'event' type (issue event or pull request event)
+      --fields strings       Fields to evaluate for labeling (title, body) (default [title,body])
   -h, --help                 help for labeler
       --id int               The integer id of the issue or pull request
   -o, --owner string         GitHub Owner/Org name [GITHUB_ACTOR]
   -r, --repo string          GitHub Repo name [GITHUB_REPO]
   -t, --type string          The target event type to label (issues or pull_request) [GITHUB_EVENT_NAME]
   -v, --version              version for labeler
+
 ```
 
 Example usage:
@@ -70,6 +72,8 @@ labels:
     - '\bquestion\b'
 ```
 
+Note that simple schema doesn't allow for some of the more advanced features of the full schema, such as excluding patterns or customizing comments for issues and pull requests. If you need those features, consider using the full schema.
+
 ### Full Schema
 
 ```yaml
@@ -80,6 +84,11 @@ enable:
   issues: true
   prs: true
 # comments object allows you to specify a different message for issues and prs
+
+# (Optional): Determine which fields of the issue or pull request to evaluate.
+fields:
+  - title
+  - body
 
 comments:
   issues: |

@@ -275,7 +275,6 @@ func TestLabeler_Execute_success_issue(t *testing.T) {
 	ctx := context.Background()
 	mockClient := new(mockRichClient)
 
-	mockCfg := new(mockConfig)
 	l := &Labeler{
 		Owner:      ptr("owner"),
 		Repo:       ptr("repo"),
@@ -297,13 +296,105 @@ labels:
   'question':
     - '\bquestion\b'
 `))), nil, nil)
-	mockCfg.On("FromBytes", mock.Anything).Return(nil)
-	mockCfg.On("LabelsFor", mock.Anything, mock.Anything).Return(map[string]model.Label{})
-	mockClient.On("GetIssue", mock.Anything, "owner", "repo", 1).Return(&github.Issue{Title: ptr("t"), Body: ptr("b")}, nil, nil)
+	mockClient.On("GetIssue", mock.Anything, "owner", "repo", 1).Return(&github.Issue{Title: ptr("title"), Body: ptr("body")}, nil, nil)
 	err := l.Execute()
 	assert.NoError(t, err)
 
 	mockClient.AssertNumberOfCalls(t, "GetIssue", 1)
+	mockClient.AssertExpectations(t)
+}
+
+func TestLabeler_Execute_allows_config_override_fields_title(t *testing.T) {
+	ctx := context.Background()
+	mockClient := new(mockRichClient)
+
+	l := &Labeler{
+		Owner:      ptr("owner"),
+		Repo:       ptr("repo"),
+		Event:      ptr("issues"),
+		ID:         ptr(1),
+		context:    &ctx,
+		client:     mockClient,
+		configPath: ".github/labeler.yml",
+		fieldFlag:  AllFieldFlags,
+	}
+	mockClient.On("DownloadContents", mock.Anything, "owner", "repo", ".github/labeler.yml", mock.Anything).
+		Return(io.NopCloser(bytes.NewReader([]byte(
+			`%YAML 1.1
+---
+enable:
+  issues: true
+  prs: false
+
+fields:
+  - title
+
+labels:
+  'bug':
+    include:
+      - '\btitle[s]?\b'
+    exclude: []
+  'help wanted':
+    include:
+      - '\bbody( me)?\b'
+`))), nil, nil)
+	mockClient.On("GetIssue", mock.Anything, "owner", "repo", 1).Return(&github.Issue{Title: ptr("title"), Body: ptr("body")}, nil, nil)
+	mockClient.On("AddLabelsToIssue", mock.Anything, "owner", "repo", 1, []string{"bug"}).Return([]*github.Label{{Name: ptr("bug")}}, nil, nil)
+	err := l.Execute()
+	assert.NoError(t, err)
+
+	mockClient.AssertNumberOfCalls(t, "GetIssue", 1)
+	mockClient.AssertCalled(t, "AddLabelsToIssue", mock.Anything, "owner", "repo", 1, []string{"bug"})
+	mockClient.AssertNumberOfCalls(t, "AddLabelsToIssue", 1)
+	mockClient.AssertExpectations(t)
+}
+
+func TestLabeler_Execute_allows_config_override_fields_body(t *testing.T) {
+	ctx := context.Background()
+	mockClient := new(mockRichClient)
+
+	mockCfg := new(mockConfig)
+	l := &Labeler{
+		Owner:      ptr("owner"),
+		Repo:       ptr("repo"),
+		Event:      ptr("issues"),
+		ID:         ptr(1),
+		context:    &ctx,
+		client:     mockClient,
+		configPath: ".github/labeler.yml",
+		fieldFlag:  AllFieldFlags,
+	}
+	mockClient.On("DownloadContents", mock.Anything, "owner", "repo", ".github/labeler.yml", mock.Anything).
+		Return(io.NopCloser(bytes.NewReader([]byte(
+			`%YAML 1.1
+---
+enable:
+  issues: true
+  prs: false
+
+fields:
+  - body
+
+labels:
+  'bug':
+    include:
+      - '\btitle[s]?\b'
+    exclude: []
+  'help wanted':
+    include:
+      - '\bbody\b'
+
+`))), nil, nil)
+	mockCfg.On("FromBytes", mock.Anything).Return(nil)
+	mockCfg.On("LabelsFor", "body").Return(map[string]model.Label{})
+	mockClient.On("GetIssue", mock.Anything, "owner", "repo", 1).Return(&github.Issue{Title: ptr("title"), Body: ptr("body")}, nil, nil)
+	mockClient.On("AddLabelsToIssue", mock.Anything, "owner", "repo", 1, []string{"help wanted"}).Return([]*github.Label{{Name: ptr("help wanted")}}, nil, nil)
+	err := l.Execute()
+	assert.NoError(t, err)
+
+	mockClient.AssertNumberOfCalls(t, "GetIssue", 1)
+	mockClient.AssertCalled(t, "AddLabelsToIssue", mock.Anything, "owner", "repo", 1, []string{"help wanted"})
+	mockClient.AssertNumberOfCalls(t, "AddLabelsToIssue", 1)
 	mockClient.AssertExpectations(t)
 }
 

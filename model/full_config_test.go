@@ -14,6 +14,7 @@ func TestFullConfig_FromBytes(t *testing.T) {
 		Enable   *Enable
 		Comments *Comments
 		Labels   map[string]Label
+		Fields   []string
 	}
 	type args struct {
 		b []byte
@@ -48,7 +49,36 @@ func TestFullConfig_FromBytes(t *testing.T) {
 				}.Ptr(),
 			},
 			args{helperTestData(t, "full_config.yaml")},
-			false},
+			false,
+		},
+
+		{"full config title only",
+			fields{
+				Labels: map[string]Label{
+					"bug": {
+						Include:  []string{"\\bbug[s]?\\b"},
+						Exclude:  []string{},
+						Branches: []string{"main", "develop"},
+					},
+					"enhancement": {
+						Include: []string{"\\bfeat\\b"},
+						Exclude: []string{},
+					},
+					"help wanted": {
+						Include: []string{"\\bhelp( me)?\\b"},
+						Exclude: []string{"\\b\\[test(ing)?\\]\\b"},
+					},
+				},
+				Enable: Enable{Issues: &btrue, PullRequests: &bfalse}.Ptr(),
+				Comments: Comments{
+					Issues:       p("👍 Thanks for this!"),
+					PullRequests: p("I applied labels to your pull request.\n\nPlease review the labels.\n"),
+				}.Ptr(),
+				Fields: []string{"title"},
+			},
+			args{helperTestData(t, "full_config_title_only.yaml")},
+			false,
+		},
 		{"full config labels only",
 			fields{
 				Labels: map[string]Label{
@@ -88,6 +118,7 @@ func TestFullConfig_FromBytes(t *testing.T) {
 				assert.Equal(t, tt.fields.Enable, f.Enable)
 				assert.Equal(t, tt.fields.Comments, f.Comments)
 				assert.Equal(t, tt.fields.Labels, f.Labels)
+				assert.Equal(t, tt.fields.Fields, f.Fields)
 			}
 		})
 	}

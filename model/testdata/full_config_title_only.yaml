@@ -1,0 +1,33 @@
+%YAML 1.1
+---
+enable:
+  issues: true
+  prs: false
+
+fields:
+  - title
+
+comments:
+  issues: 👍 Thanks for this!
+  prs: |
+    I applied labels to your pull request.
+
+    Please review the labels.
+
+labels:
+  'bug':
+    include:
+      - '\bbug[s]?\b'
+    exclude: []
+    branches:
+      - main
+      - develop
+  'help wanted':
+    include:
+      - '\bhelp( me)?\b'
+    exclude:
+      - '\b\[test(ing)?\]\b'
+  'enhancement':
+    include:
+      - '\bfeat\b'
+    exclude: []
