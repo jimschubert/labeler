@@ -1,49 +1,27 @@
-name: Build
+name: Build Go
 on:
   push:
-    branches:
-      - 'master'
-      - 'main'
-      - 'feature/**'
-      - 'releases/**'
+    branches: [ 'main', 'master', 'feature/*', 'releases/*' ]
     paths-ignore:
       - 'docs/**'
       - 'README.md'
-  pull_request:
-    branches:
-      - 'master'
-      - 'main'
+    # paths-ignore is ignored for tags
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to build (e.g., v1.0.0)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-
   build:
-    name: go test
-    runs-on: ubuntu-latest
-    steps:
-
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Install Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8
-
-      - name: Build
-        run: go build -v ./...
-
-      - name: Test
-        run: go test -v -race ./... -cover
+    uses: jimschubert/.workflows/.github/workflows/go-build-goreleaser.yml@main
+    with:
+      golangci-lint: "v2.7.2"
+    secrets: inherit

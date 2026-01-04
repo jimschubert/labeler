@@ -1,0 +1,26 @@
+name: Tag Next Version (does not invoke build.yml)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Bumps the version (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  # packages: write
+
+jobs:
+  tag:
+    uses: jimschubert/.workflows/.github/workflows/tag-next-version.yml@main
+    with:
+      bump: ${{ github.event.inputs.bump }}
+      create_release: true
+    secrets: inherit
