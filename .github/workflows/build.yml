@@ -7,13 +7,6 @@ on:
       - 'README.md'
     # paths-ignore is ignored for tags
     tags: [ 'v*' ]
-  workflow_dispatch:
-    inputs:
-      ref:
-        description: 'Git ref to build (e.g., v1.0.0)'
-        required: false
-        default: ''
-        type: string
 
 permissions:
   contents: write
