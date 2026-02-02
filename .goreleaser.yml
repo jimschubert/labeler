@@ -44,10 +44,13 @@ archives:
     files:
       - LICENSE
       - README.md
+sboms:
+  - id: archive
+    artifacts: archive
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  version_template: "{{ .Tag }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: desc
   filters:
@@ -56,3 +59,22 @@ changelog:
       - '^\[doc[s]?\]'
       - '^wip:'
       - '^WIP:'
+docker_digest:
+  name_template: "digests.txt"
+dockers_v2:
+  - images:
+      - "jimschubert/labeler"
+    tags:
+      - "latest"
+      - "{{ .Tag }}"
+      - "v{{ .Major }}"
+    dockerfile: release.Dockerfile
+    labels:
+      "org.opencontainers.image.created": "{{ .Date }}"
+      "org.opencontainers.image.name": "{{ .ProjectName }}"
+      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "org.opencontainers.image.version": "{{ .Version }}"
+      "org.opencontainers.image.source": "https://github.com/jimschubert/labeler"
+      "org.opencontainers.image.licenses": "Apache-2.0"
+    build_args:
+      APP_NAME: "{{ .ProjectName }}"
