@@ -1,7 +1,7 @@
 name: Build Go
 on:
   push:
-    branches: [ 'main', 'master', 'feature/*', 'releases/*' ]
+    branches: [ 'main', 'master', 'feature/*' ]
     paths-ignore:
       - 'docs/**'
       - 'README.md'
@@ -11,10 +11,15 @@ on:
 permissions:
   contents: write
   packages: write
+  # id-token is required for attestation (signing)
+  id-token: write
+  attestations: write
+  artifact-metadata: write
 
 jobs:
   build:
     uses: jimschubert/.workflows/.github/workflows/go-build-goreleaser.yml@main
     with:
       golangci-lint: "v2.7.2"
+      docker-digests-path: ''
     secrets: inherit
