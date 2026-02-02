@@ -16,6 +16,10 @@ permissions:
   attestations: write
   artifact-metadata: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     uses: jimschubert/.workflows/.github/workflows/go-build-goreleaser.yml@main
