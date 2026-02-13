@@ -51,16 +51,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull and push images
-        run: |
-          # Pull from Docker Hub and push to GHCR
-          docker pull jimschubert/labeler:${{ steps.version.outputs.tag }}
-          docker tag jimschubert/labeler:${{ steps.version.outputs.tag }} ghcr.io/jimschubert/labeler/labeler:${{ steps.version.outputs.tag }}
-          docker tag jimschubert/labeler:${{ steps.version.outputs.tag }} ghcr.io/jimschubert/labeler/labeler:v${{ steps.version.outputs.major }}
-          docker tag jimschubert/labeler:${{ steps.version.outputs.tag }} ghcr.io/jimschubert/labeler/labeler:v${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}
-          docker tag jimschubert/labeler:${{ steps.version.outputs.tag }} ghcr.io/jimschubert/labeler/labeler:latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-          docker push ghcr.io/jimschubert/labeler/labeler:${{ steps.version.outputs.tag }}
-          docker push ghcr.io/jimschubert/labeler/labeler:v${{ steps.version.outputs.major }}
-          docker push ghcr.io/jimschubert/labeler/labeler:v${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }}
-          docker push ghcr.io/jimschubert/labeler/labeler:latest
+      - name: Mirror multi-platform images to GHCR
+        run: |
+          # Use buildx imagetools to mirror all platforms from Docker Hub to GHCR
+          SOURCE_IMAGE="jimschubert/labeler:${{ steps.version.outputs.tag }}"
+          TARGET_IMAGE="ghcr.io/jimschubert/labeler/labeler"
+          
+          # Inspect source to verify it exists and show platforms
+          echo "Source image platforms:"
+          docker buildx imagetools inspect ${SOURCE_IMAGE}
+          
+          # Mirror all platforms with multiple tags
+          docker buildx imagetools create \
+            --tag ${TARGET_IMAGE}:${{ steps.version.outputs.tag }} \
+            --tag ${TARGET_IMAGE}:v${{ steps.version.outputs.major }} \
+            --tag ${TARGET_IMAGE}:v${{ steps.version.outputs.major }}.${{ steps.version.outputs.minor }} \
+            --tag ${TARGET_IMAGE}:latest \
+            ${SOURCE_IMAGE}
+          
+          echo "Successfully mirrored all platforms to GHCR"
