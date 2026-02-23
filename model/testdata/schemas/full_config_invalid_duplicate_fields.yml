@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../schema/labeler.full.schema.json
+enable:
+  issues: true
+  prs: false
+
+# Fields must be unique values
+fields:
+  - title
+  - title
+  - title
+
+comments:
+  issues: 👍 Thanks for this!
+
+labels:
+  'bug':
+    include:
+      - '\bbug[s]?\b'
+    exclude: []
+    branches:
+      - main
+      - develop

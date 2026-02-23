@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../schema/labeler.full.schema.json
+enable:
+  issues: true
+  prs: false
+
+comments:
+  issues: 👍 Thanks for this!
+
+# labels is required to be a non-empty object
+labels: {}

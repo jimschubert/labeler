@@ -37,15 +37,12 @@ The configuration file must be located in the target repository at `.github/labe
 
 The configuration file location can be modified by passing a different path to `--config-path`. This path must be relative to the repository root. All of the following would be valid possible customizations (assuming you've created a configuration file at that location):
 
-* `.github/labeler-custom.yml`
-* `tools/labeler.yml`
-* `.labeler.yml`
-
 Feel free to use one of the following schema examples to get started. 
 
 ### Simple Schema
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jimschubert/labeler/HEAD/model/schema/labeler.simple.schema.json
 # labeler "simple" schema
 # Comment is applied to both issues and pull requests.
 # If you need a more robust solution, consider the "full" schema.
@@ -77,6 +74,7 @@ Note that simple schema doesn't allow for some of the more advanced features of 
 ### Full Schema
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jimschubert/labeler/HEAD/model/schema/labeler.schema.json
 # labeler "full" schema
 
 # enable labeler on issues, prs, or both.
@@ -125,6 +123,28 @@ labels:
     exclude: []
 
 ```
+
+### Validate via JSON Schema
+
+You can validate your YAML against the following JSON schemas:
+
+- `schema/labeler.simple.schema.json`
+- `schema/labeler.full.schema.json`
+- `schema/labeler.schema.json` (can be applied to either format)
+
+These validate structure such required keys, types, etc. (syntax). They **don't** validate regex correctness or GitHub label existence (semantics).
+
+#### Editor validation (YAML `$schema`)
+
+Some editors (VS Code, JetBrains, etc.) can use a `$schema` hint to perform validation from JSON schema.
+
+Add this as the first line in your `.github/labeler.yml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jimschubert/labeler/HEAD/model/schema/labeler.schema.json
+```
+
+If you want to force a specific schema, change the fielname of the URL to  `labeler.simple.schema.json` or `labeler.full.schema.json`.
 
 ## Build
 

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jimschubert/labeler/HEAD/model/schema/labeler.schema.json",
+  "title": "labeler config",
+  "description": "Schema for labeler configuration (simple or full).",
+  "oneOf": [
+    { "$ref": "labeler.full.schema.json"},
+    { "$ref": "labeler.simple.schema.json"}
+  ]
+}
+

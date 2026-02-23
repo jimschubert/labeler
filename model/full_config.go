@@ -11,29 +11,29 @@ import (
 type (
 	// Enable is a structure to hold options around enabling the labeler
 	Enable struct {
-		Issues       *bool `yaml:"issues,omitempty"`
-		PullRequests *bool `yaml:"prs,omitempty"`
+		Issues       *bool `yaml:"issues,omitempty" json:"issues,omitempty"`
+		PullRequests *bool `yaml:"prs,omitempty" json:"prs,omitempty"`
 	}
 
 	// Comments are optional comment text to be added to the issue or pull request when labels are applied
 	Comments struct {
-		Issues       *string `yaml:"issues,omitempty"`
-		PullRequests *string `yaml:"prs,omitempty"`
+		Issues       *string `yaml:"issues,omitempty" json:"issues,omitempty"`
+		PullRequests *string `yaml:"prs,omitempty" json:"prs,omitempty"`
 	}
 
 	// Label holds the rules around how labels will be applied
 	Label struct {
-		Include  []string `yaml:"include,omitempty,flow"`
-		Exclude  []string `yaml:"exclude,omitempty,flow"`
-		Branches []string `yaml:"branches,omitempty,flow"`
+		Include  []string `yaml:"include,omitempty,flow" json:"include,omitempty"`
+		Exclude  []string `yaml:"exclude,omitempty,flow" json:"exclude,omitempty"`
+		Branches []string `yaml:"branches,omitempty,flow" json:"branches,omitempty"`
 	}
 
 	// FullConfig is the container defining how the configuration object is structured
 	FullConfig struct {
-		Enable   *Enable          `yaml:"enable,omitempty"`
-		Comments *Comments        `yaml:"comments,omitempty"`
-		Labels   map[string]Label `yaml:"labels,flow"`
-		Fields   []string         `yaml:"fields,omitempty,flow"`
+		Enable   *Enable          `yaml:"enable,omitempty" json:"enable,omitempty"`
+		Comments *Comments        `yaml:"comments,omitempty" json:"comments,omitempty"`
+		Labels   map[string]Label `yaml:"labels,flow" json:"labels,omitempty"`
+		Fields   []string         `yaml:"fields,omitempty,flow" json:"fields,omitempty"`
 	}
 )
 

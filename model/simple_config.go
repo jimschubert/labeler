@@ -10,13 +10,13 @@ import (
 // SimpleConfig is the simplest supported config structure. See FullConfig for more functionality.
 type SimpleConfig struct {
 	// Comment will be applied to any issue or pull request matching the target labels
-	Comment string `yaml:"comment,omitempty"`
+	Comment string `yaml:"comment,omitempty" json:"comment,omitempty"`
 
 	// Labels are keyed by the label to be applied, and valued by the array of regular expression patterns to match before applying
-	Labels map[string][]string `yaml:"labels,omitempty,flow"`
+	Labels map[string][]string `yaml:"labels,omitempty,flow" json:"labels,omitempty"`
 
 	// Branches are keyed by the label name, and valued by the array of branch names to match before applying
-	Branches map[string][]string `yaml:"branches,omitempty,flow"`
+	Branches map[string][]string `yaml:"branches,omitempty,flow" json:"branches,omitempty"`
 }
 
 // FromBytes parses the bytes into the SimpleConfig object
