@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/kong v1.15.0
 	github.com/google/go-github/v50 v50.2.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/oauth2 v0.36.0
 	gopkg.in/yaml.v2 v2.4.0
