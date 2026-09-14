@@ -1,6 +1,6 @@
 module github.com/jimschubert/labeler
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/alecthomas/kong v1.16.1
@@ -8,7 +8,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/sirupsen/logrus v1.10.1
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/oauth2 v0.36.0
+	golang.org/x/oauth2 v0.37.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
