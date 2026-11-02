@@ -3,7 +3,7 @@ module github.com/jimschubert/labeler
 go 1.25.0
 
 require (
-	github.com/alecthomas/kong v1.16.1
+	github.com/alecthomas/kong v1.17.0
 	github.com/google/go-github/v50 v50.2.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/sirupsen/logrus v1.10.1
